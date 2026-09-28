@@ -14,3 +14,8 @@ binding = "DB"
 database_name = "bankrisk-d1"
 database_id = "local-d1-binding"
 migrations_dir = "migrations"
+
+# GREENFINANCE MVP — Evidence Storage (L3)
+[[r2_buckets]]
+binding = "EVIDENCE"
+bucket_name = "greenfinance-evidence"

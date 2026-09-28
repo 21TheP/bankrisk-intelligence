@@ -541,7 +541,10 @@
     { id: 'map', label: 'Bản đồ hệ thống' },
     { id: 'cockpit', label: 'Giám sát' },
     { group: 'Dữ liệu' },
-    { id: 'data', label: 'Dữ liệu & Kiểm tra' }
+    { id: 'data', label: 'Dữ liệu & Kiểm tra' },
+    { group: 'AI & Tích hợp' },
+    { id: 'ai', label: 'AI Engine' },
+    { id: 'evidence', label: 'Bằng chứng & Quy trình' }
   ];
 
   function buildShell() {

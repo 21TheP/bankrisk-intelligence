@@ -198,6 +198,30 @@ python pipeline/run_pipeline.py --fallback sample-data.xlsx
 
 ---
 
+### 4.6. Nâng cấp kiến trúc 10 lớp trên Cloudflare zero-cost (AI Engine, Evidence, Workflow, Audit)
+
+Áp dụng mô hình kiến trúc 10 lớp cho bài toán phân tích rủi ro ngân hàng VN — bảng mapping hiện trạng:
+
+| Lớp (kiến trúc đề xuất) | BANKRISK hiện tại | Nâng cấp mới |
+|---|---|---|
+| 1. Presentation | Dashboard 9 module (Pages static) | ✓ |
+| 2. Identity & Access | — | Persona MVP (Phân tích/Giám sát — view "Bằng chứng & Quy trình"); production: Clerk / Supabase Auth |
+| 3. Data Collection & Evidence | Upload Excel/CSV | Đính kèm tài liệu theo ngân hàng — demo localStorage, API R2 sẵn sàng (`/api/evidence/*`) |
+| 4–5. Engines (quy tắc + tính toán) | 14 quy tắc V-01..V-14, chỉ tiêu F-01..F-06, EWS, Stress, Forecast, XGBoost (Web Worker) | ✓ |
+| 6. AI Engine | — | **Mới**: view "AI Engine" — trích xuất BCTC từ văn bản PDF → dòng dữ liệu chuẩn schema; anomaly detection; nhận xét phân tích ngân hàng. Proxy Gemini qua Worker (`/api/ai/analyze`, secret `GEMINI_API_KEY`), fallback rule-based khi offline |
+| 7–8. Finance & Decision Support | FHS, EWS, Severity | **Mới**: quy trình xử lý cảnh báo (todo/processing/done/dismissed) theo ngân hàng×kỳ×tín hiệu |
+| 9. Impact Monitoring | SRI, xu hướng hệ thống | ✓ |
+| 10. Data & Integration | D1 datasets, opt-in | **Mới**: migration `0003_platform.sql` (br_evidence, br_workflow, br_audit_log), audit log UI, REST API đầy đủ |
+
+Cấu hình AI (free tier Gemini — 15 req/phút):
+```bash
+cd cloudflare
+npx wrangler secret put GEMINI_API_KEY   # key từ https://aistudio.google.com
+npx wrangler d1 migrations apply bankrisk-d1
+npx wrangler deploy
+```
+Không có key → AI Engine tự chuyển chế độ rule-based (biên hợp lý cơ bản), mọi tính năng khác vẫn chạy.
+
 ## 5. Tuyên bố Miễn trừ Trách nhiệm & Giới hạn Pháp lý (SEC-13 / PRD 0.3)
 
 1. **Bản chất Học thuật**: Hệ thống này là sản phẩm học thuật hỗ trợ ra quyết định và nghiên cứu, được xây dựng dựa trên dữ liệu báo cáo tài chính công khai của 23 ngân hàng thương mại Việt Nam giai đoạn 2014–2024.
