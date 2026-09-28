@@ -289,3 +289,22 @@ label.lbl { font-size: 12.5px; color: var(--muted); font-weight: 600; display: b
 .seg-btn:hover { color: var(--navy); }
 .seg-btn.active { background: #fff; color: var(--navy); box-shadow: 0 1px 3px rgba(13, 47, 92, .18); }
 .seg-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---------- Dropdown tự vẽ (UI.dropdown) ---------- */
+.dd { position: relative; display: inline-block; }
+.dd-btn { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px;
+  border: 1px solid #d4d9e1; background: #fff; border-radius: 8px; padding: 7px 12px;
+  font-size: 13.5px; font-family: inherit; color: var(--navy); cursor: pointer; min-width: 110px;
+  max-width: 300px; transition: border-color .12s ease; }
+.dd-btn:hover { border-color: var(--navy); }
+.dd.open .dd-btn, .dd-btn:focus-visible { border-color: var(--navy); box-shadow: 0 0 0 2px rgba(13, 47, 92, .12); outline: none; }
+.dd-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-arrow { font-size: 10px; color: #6b7280; flex: none; }
+.dd-menu { display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 100%;
+  max-width: 340px; background: #fff; border: 1px solid #e3e7ee; border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(13, 47, 92, .16); padding: 4px; z-index: 95; max-height: 300px; overflow: auto; }
+.dd.open .dd-menu { display: block; }
+.dd-item { padding: 7px 10px; border-radius: 7px; font-size: 13px; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #374151; }
+.dd-item:hover { background: #f0f4fa; }
+.dd-item.active { background: #eaf1fb; color: var(--navy); font-weight: 600; }

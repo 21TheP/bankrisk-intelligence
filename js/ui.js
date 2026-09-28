@@ -29,6 +29,46 @@
     return el;
   };
 
+  /* ---------- Dropdown tự vẽ (thay <select> native — popup native của OS
+     không mở được trong một số webview nhúng; component này chạy bằng DOM thuần) ---------- */
+  UI.closeDropdowns = function () {
+    document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open'));
+  };
+  document.addEventListener('click', () => UI.closeDropdowns());
+
+  UI.dropdown = function (opts) {
+    const find = v => opts.options.find(o => String(o.value) === String(v));
+    const cur = find(opts.value) || opts.options[0] || { label: '—' };
+    const dd = UI.h('div', { class: 'dd' });
+    const label = UI.h('span', { class: 'dd-label' }, cur.label);
+    const btn = UI.h('button', { class: 'dd-btn', type: 'button', title: cur.label }, label,
+      UI.h('span', { class: 'dd-arrow' }, '▾'));
+    const menu = UI.h('div', { class: 'dd-menu' },
+      opts.options.map(o => UI.h('div', {
+        class: 'dd-item' + (String(o.value) === String(opts.value) ? ' active' : ''),
+        'data-value': o.value
+      }, o.label)));
+    dd.append(btn, menu);
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const wasOpen = dd.classList.contains('open');
+      UI.closeDropdowns();
+      if (!wasOpen && opts.options.length) dd.classList.add('open');
+    });
+    menu.addEventListener('click', e => {
+      const item = e.target.closest('.dd-item');
+      if (!item) return;
+      e.stopPropagation();
+      UI.closeDropdowns();
+      menu.querySelectorAll('.dd-item').forEach(i => i.classList.toggle('active', i === item));
+      const opt = find(item.dataset.value);
+      label.textContent = opt ? opt.label : item.textContent;
+      btn.title = label.textContent;
+      if (opts.onChange) opts.onChange(item.dataset.value);
+    });
+    return dd;
+  };
+
   /* ---------- Huy hiệu nguồn (PRD 2.2) ---------- */
   const BADGE_META = {
     A: { cls: 'src-A', label: 'Kết quả nghiên cứu' },

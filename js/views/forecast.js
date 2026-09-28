@@ -37,15 +37,26 @@
     if (!avail.some(o => o.key === st.forecast.ind)) st.forecast.ind = 'car';
 
     /* ---- Hàng điều khiển: ngân hàng · năm gốc · kỳ · phương pháp ---- */
-    const selBank = UI.h('select', { class: 'sel', onchange: e => { st.bank = e.target.value; APP.setHash({ bank: e.target.value }); APP.render(); } },
-      banks.map(b => UI.h('option', { value: b.bank_code, selected: b.bank_code === bankCode }, b.bank_code + ' — ' + b.bank_name)));
-    const selBase = UI.h('select', { class: 'sel', onchange: e => { st.forecast.baseYear = +e.target.value; renderPanel(); } },
-      inds.map(i => UI.h('option', { value: i.year, selected: st.forecast.baseYear === i.year }, 'từ ' + i.year)));
-    const selH = UI.h('select', { class: 'sel', onchange: e => { st.forecast.h = +e.target.value; renderPanel(); } },
-      [1, 2, 3, 4, 5].map(h => UI.h('option', { value: h, selected: st.forecast.h === h }, h + ' năm')));
-    const selMethod = UI.h('select', { class: 'sel', onchange: e => { st.forecast.method = e.target.value; renderPanel(); } },
-      UI.h('option', { value: 'ols', selected: st.forecast.method === 'ols' }, 'Xu hướng tuyến tính (OLS)'),
-      UI.h('option', { value: 'ma', selected: st.forecast.method === 'ma' }, 'Trung bình trượt 3 kỳ'));
+    const selBank = UI.dropdown({
+      options: banks.map(b => ({ value: b.bank_code, label: b.bank_code + ' — ' + b.bank_name })),
+      value: bankCode,
+      onChange: v => { st.bank = v; APP.setHash({ bank: v }); APP.render(); }
+    });
+    const selBase = UI.dropdown({
+      options: inds.map(i => ({ value: String(i.year), label: 'từ ' + i.year })),
+      value: st.forecast.baseYear,
+      onChange: v => { st.forecast.baseYear = +v; renderPanel(); }
+    });
+    const selH = UI.dropdown({
+      options: [1, 2, 3, 4, 5].map(h => ({ value: String(h), label: h + ' năm' })),
+      value: st.forecast.h,
+      onChange: v => { st.forecast.h = +v; renderPanel(); }
+    });
+    const selMethod = UI.dropdown({
+      options: [{ value: 'ols', label: 'Xu hướng tuyến tính (OLS)' }, { value: 'ma', label: 'Trung bình trượt 3 kỳ' }],
+      value: st.forecast.method,
+      onChange: v => { st.forecast.method = v; renderPanel(); }
+    });
     wrap.append(UI.h('div', { class: 'card mb' },
       UI.h('div', { class: 'flex', style: { flexWrap: 'wrap', gap: '10px' } },
         UI.h('div', {}, UI.h('label', { class: 'lbl' }, 'Ngân hàng'), selBank),
@@ -79,8 +90,11 @@
       if (!baseCandidates.length) { card.append(UI.emptyState('Chỉ tiêu này không có dữ liệu ở ngân hàng đã chọn.')); return; }
       if (!baseCandidates.includes(st.forecast.baseYear)) st.forecast.baseYear = baseCandidates[baseCandidates.length - 1];
       const baseYear = st.forecast.baseYear;
-      // Đồng bộ select năm gốc với state (select được tạo trước khi resolve)
-      if (selBase.value !== String(baseYear)) selBase.value = String(baseYear);
+      // Đồng bộ dropdown năm gốc với state (năm gốc phụ thuộc chỉ tiêu đang chọn)
+      selBase.querySelectorAll('.dd-item').forEach(i =>
+        i.classList.toggle('active', i.dataset.value === String(baseYear)));
+      const baseLabel = selBase.querySelector('.dd-label');
+      if (baseLabel && baseLabel.textContent !== 'từ ' + baseYear) baseLabel.textContent = 'từ ' + baseYear;
 
       // Fit chỉ trên dữ liệu ≤ năm gốc
       const fit = inds.filter(i => i.year <= baseYear);

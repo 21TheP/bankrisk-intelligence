@@ -102,15 +102,19 @@
       const bottom = UI.h('div', { class: 'grid c2 mt' });
       wrap.append(bottom);
       const distCard = UI.h('div', { class: 'card' });
-      const selIndicator = UI.h('select', { class: 'sel', onchange: () => renderDist() },
-        ['npl', 'car', 'roa', 'cir', 'dprr', 'niir'].map(k => UI.h('option', { value: k }, BR.INDICATORS[k].label + ' — ' + BR.INDICATORS[k].vi)));
+      let distKey = 'npl';
+      const selIndicator = UI.dropdown({
+        options: ['npl', 'car', 'roa', 'cir', 'dprr', 'niir'].map(k => ({ value: k, label: BR.INDICATORS[k].label + ' — ' + BR.INDICATORS[k].vi })),
+        value: distKey,
+        onChange: k => { distKey = k; renderDist(); }
+      });
       distCard.append(UI.h('div', { class: 'flex mb' }, UI.h('h3', { style: { margin: 0 } }, 'Phân phối chỉ tiêu'), selIndicator, UI.badge(UI.srcType(st))));
       const distBox = UI.h('div');
       distCard.append(distBox);
       bottom.append(distCard);
 
       function renderDist() {
-        const key = selIndicator.value;
+        const key = distKey;
         distBox.innerHTML = '';
         const vals = inYear.map(i => i[key]).filter(Number.isFinite);
         if (vals.length < 3) { distBox.append(UI.emptyState('Chưa đủ dữ liệu để vẽ phân phối cho kỳ này.')); return; }

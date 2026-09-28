@@ -21,14 +21,17 @@
 
     const controls = UI.h('div', { class: 'flex mb' },
       UI.h('label', { class: 'lbl' }, 'Nhóm rủi ro:'),
-      UI.h('select', {
-        class: 'sel', onchange: e => { state.group = e.target.value; renderTable(); },
-      },
-        UI.h('option', { value: 'all' }, 'Tất cả'),
-        UI.h('option', { value: 'critical' }, 'Nghiêm trọng'),
-        UI.h('option', { value: 'high' }, 'Cảnh báo cao'),
-        UI.h('option', { value: 'watch' }, 'Theo dõi'),
-        UI.h('option', { value: 'stable' }, 'Ổn định')),
+      UI.dropdown({
+        options: [
+          { value: 'all', label: 'Tất cả' },
+          { value: 'critical', label: 'Nghiêm trọng' },
+          { value: 'high', label: 'Cảnh báo cao' },
+          { value: 'watch', label: 'Theo dõi' },
+          { value: 'stable', label: 'Ổn định' }
+        ],
+        value: state.group,
+        onChange: v => { state.group = v; renderTable(); }
+      }),
       UI.h('span', { class: 'muted' }, 'Kỳ: ' + st.year),
       UI.badge(UI.srcType(st)),
       UI.h('span', { class: 'spacer' }),

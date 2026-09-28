@@ -192,10 +192,12 @@
       const years = this.years();
       yearSel.innerHTML = '';
       if (years.length) {
-        years.forEach(y => yearSel.append(UI.h('option', { value: y }, 'Năm ' + y)));
-        yearSel.value = String(st.year);
-        yearSel.disabled = false;
-      } else yearSel.disabled = true;
+        yearSel.append(UI.dropdown({
+          options: years.map(y => ({ value: String(y), label: 'Năm ' + y })),
+          value: String(st.year),
+          onChange: v => APP.setHash({ year: v || null })
+        }));
+      }
       document.getElementById('source-chip').innerHTML = '';
       if (st.source) {
         document.getElementById('source-chip').append(
@@ -563,7 +565,7 @@
       UI.h('h1', { id: 'page-title' }, 'BANKRISK'),
       UI.h('div', { class: 'controls' },
         UI.h('span', { id: 'source-chip' }),
-        UI.h('select', { class: 'sel', id: 'year-select', disabled: true, onchange: e => APP.setHash({ year: e.target.value || null }) }),
+        UI.h('span', { id: 'year-select' }),
         fileInputTop,
         UI.h('button', { class: 'btn', onclick: () => fileInputTop.click() }, '📁 Tải tệp lên'),
         UI.h('button', { class: 'btn primary', onclick: () => APP.state.source ? APP.exportReport('pdf') : APP.setHash({}, 'data') }, '🖨 Xuất báo cáo')));

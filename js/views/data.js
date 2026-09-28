@@ -76,10 +76,15 @@
       UI.h('h3', { style: { margin: '0 0 8px' } }, 'Tuỳ chọn phân tích (ghi vào metadata — M-07)'),
       UI.h('div', { class: 'flex' },
         UI.h('label', { class: 'lbl' }, 'Cách lấy CAR khi thiếu RWA (7.3.3):'),
-        UI.h('select', { class: 'sel', onchange: e => { st.carMode = e.target.value; reanalyze(); } },
-          UI.h('option', { value: 'computed', selected: st.carMode === 'computed' }, 'Chỉ dùng RWA (mặc định)'),
-          UI.h('option', { value: 'reported', selected: st.carMode === 'reported' }, 'Dùng car_reported khi thiếu'),
-          UI.h('option', { value: 'derive', selected: st.carMode === 'derive' }, 'Suy ra RWA từ car_reported')),
+        UI.dropdown({
+          options: [
+            { value: 'computed', label: 'Chỉ dùng RWA (mặc định)' },
+            { value: 'reported', label: 'Dùng car_reported khi thiếu' },
+            { value: 'derive', label: 'Suy ra RWA từ car_reported' }
+          ],
+          value: st.carMode,
+          onChange: v => { st.carMode = v; reanalyze(); }
+        }),
         UI.h('span', { class: 'spacer' }),
         UI.h('label', { class: 'flex', style: { gap: '6px' } },
           UI.h('input', { type: 'checkbox', checked: st.winsorized, onchange: e => { st.winsorized = e.target.checked; reanalyze(); } }),
@@ -93,10 +98,15 @@
     const errCard = UI.h('div', { class: 'card mb' },
       UI.h('div', { class: 'flex mb' },
         UI.h('h3', { style: { margin: 0 } }, 'Bảng kiểm tra (V-01…V-14)'),
-        UI.h('select', { class: 'sel', onchange: e => { state.level = e.target.value; renderIssues(); } },
-          UI.h('option', { value: 'all' }, 'Tất cả (' + v.issues.length + ')'),
-          UI.h('option', { value: 'block' }, 'Chặn (' + v.blocks.length + ')'),
-          UI.h('option', { value: 'warn' }, 'Cảnh báo (' + v.warns.length + ')')),
+        UI.dropdown({
+          options: [
+            { value: 'all', label: 'Tất cả (' + v.issues.length + ')' },
+            { value: 'block', label: 'Chặn (' + v.blocks.length + ')' },
+            { value: 'warn', label: 'Cảnh báo (' + v.warns.length + ')' }
+          ],
+          value: state.level,
+          onChange: vl => { state.level = vl; renderIssues(); }
+        }),
         UI.h('span', { class: 'spacer' }),
         UI.h('button', { class: 'btn small', onclick: exportIssues }, '⬇ Tải danh sách lỗi (CSV)')));
     const issueHost = UI.h('div');
