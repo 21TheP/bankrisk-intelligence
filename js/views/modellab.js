@@ -156,6 +156,7 @@
       UI.table(['Trường', 'Giá trị'], [
         { cells: ['model_version', MC.model_version] },
         { cells: ['training_date', MC.training_date] },
+        { cells: ['nguồn artefact', window.BRMODEL.artifactSource || 'embedded-demo'] },
         { cells: ['input_schema', MC.input_schema.join(', ')] },
         { cells: ['split_strategy', MC.split_strategy] },
         { cells: ['dataset_version', MC.dataset_version] }

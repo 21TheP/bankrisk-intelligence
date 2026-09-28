@@ -91,4 +91,54 @@
       note: 'SGMM chỉ trình bày kết quả nghiên cứu (huy hiệu A), không ước lượng lại trong trình duyệt (PRD Mục 8.4/10.1)'
     }
   };
+  // Nguồn artefact đang dùng ('embedded-demo' | 'auto-pipeline (...)')
+  M.artifactSource = 'embedded-demo';
+
+  /* ------------------------------------------------------------
+     Bước 3 của pipeline tự động: nạp artefact mới nhất từ models/
+     (do GitHub Actions cập nhật định kỳ). Quy trình:
+       1. fetch models/xgb_risk_model.json (+ model_meta.json nếu có)
+       2. KIỂM CHỨNG test_vectors (FR-MODEL-03) — fail thì giữ artefact nhúng
+       3. Swap artefact + merge model card + cập nhật hệ số Logit
+       4. Phát sự kiện 'brmodel:artifact-updated' để app render lại
+     Chạy trên file:// (fetch chặn) hoặc chưa có models/ → im lặng bỏ qua.
+     ------------------------------------------------------------ */
+  M.loadRemoteArtifact = async function (basePath) {
+    basePath = basePath || 'models/';
+    try {
+      const res = await fetch(basePath + 'xgb_risk_model.json', { cache: 'no-store' });
+      if (!res.ok) return null;
+      const artifact = await res.json();
+      if (!artifact || !Array.isArray(artifact.trees) || !artifact.trees.length ||
+        !Array.isArray(artifact.input_schema) || !artifact.input_schema.length) return null;
+      let meta = null;
+      try {
+        const mRes = await fetch(basePath + 'model_meta.json', { cache: 'no-store' });
+        if (mRes.ok) meta = await mRes.json();
+      } catch (e) { /* meta tuỳ chọn */ }
+      if (global.BRCORE) {
+        const ver = global.BRCORE.verifyArtifact(artifact);
+        if (!ver.ok) {
+          console.warn('[BRMODEL] artefact remote KHÔNG vượt qua test_vectors — giữ artefact nhúng');
+          return null;
+        }
+      }
+      // Mutate IN-PLACE để mọi tham chiếu đã capture (const MC = BRMODEL.modelCard
+      // trong các view, MODEL_VERSION trong app.js) đều thấy nội dung mới.
+      Object.assign(M.artifact, artifact);
+      if (meta && meta.model_card) Object.assign(M.modelCard, meta.model_card);
+      if (meta && meta.logit_coefficients && global.BRCORE) {
+        global.BRCORE.LOGIT_COEFS = meta.logit_coefficients;
+      }
+      M.artifactSource = (meta && meta.model_card && meta.model_card.source) || 'auto-pipeline';
+      if (typeof document !== 'undefined' && document.dispatchEvent) {
+        document.dispatchEvent(new CustomEvent('brmodel:artifact-updated', {
+          detail: { version: artifact.model_version, source: M.artifactSource }
+        }));
+      }
+      return { version: artifact.model_version, source: M.artifactSource };
+    } catch (e) {
+      return null; // file:// hoặc môi trường không có models/ — dùng artefact nhúng
+    }
+  };
 })(typeof self !== 'undefined' ? self : (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this)));

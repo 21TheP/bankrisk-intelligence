@@ -1,0 +1,64 @@
+# ============================================================
+# BANKRISK Intelligence — Auto Model Update (Bước 2: Cron trên Cloud)
+# ------------------------------------------------------------
+# Lịch chạy: 02:00 UTC thứ Hai hằng tuần (~09:00 giờ VN) + chạy thủ công
+# qua tab "Run workflow".
+#
+# Luồng: ingest (vnstock/TCBS API, nếu bị chặn geo thì tự rơi về
+# sample-data.xlsx) → feature engineering → huấn luyện Logit + XGBoost
+# → tự kiểm chứng test_vectors → commit models/ mới vào main.
+#
+# LƯU Ý: các API tài chính VN (TCBS/VCI) có thể chặn IP datacenter của
+# GitHub runner. Khi đó pipeline vẫn chạy bằng dữ liệu fallback và ghi
+# rõ nguồn trong model_meta.json. Để kéo dữ liệu live, đặt secret
+# VNSTOCK không cần thiết — chạy workflow trên máy/VM có IP VN hoặc
+# qua Google Colab rồi đẩy file lên models/.
+#
+# Frontend tự nạp artefact mới lúc chạy (js/model-artifact.js →
+# BRMODEL.loadRemoteArtifact) — không cần deploy lại, chỉ cần Pages/CDN
+# phục vụ file models/ mới nhất từ repo.
+# ============================================================
+name: update_model
+
+on:
+  schedule:
+    - cron: "0 2 * * 1" # 02:00 UTC thứ Hai hằng tuần
+  workflow_dispatch: # cho phép chạy thủ công
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-model
+  cancel-in-progress: false
+
+jobs:
+  update-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Cài dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Chạy pipeline (ingest → features → train → verify)
+        run: python pipeline/run_pipeline.py --fallback sample-data.xlsx
+
+      - name: Commit artefact mới (nếu có thay đổi)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain models/)" ]; then
+            git add models/
+            git commit -m "chore(models): auto-update model artifacts from data pipeline [skip ci]"
+            git push
+          else
+            echo "Không có thay đổi dữ liệu/mô hình — không commit."
+          fi

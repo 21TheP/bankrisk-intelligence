@@ -168,9 +168,39 @@ npx wrangler deploy
 
 ---
 
+### 4.5. Pipeline tự động hóa dữ liệu & mô hình (Data Ingestion → Cron → Frontend sync)
+
+Toàn bộ chu trình "kéo dữ liệu → huấn luyện lại → cập nhật mô hình trên web" được tự động hoá, không cần can thiệp tay:
+
+```
+[Bước 1] pipeline/ingest.py      → kéo BCTC từ vnstock / TCBS HTTP / file fallback
+[Bước 1.5] pipeline/features.py  → tính 8 biến SIZE, CAR, ROA, NIIR, NPL, DPRR, CIR, INF
+                                   (sao chép chính xác công thức js/core.js — PRD 7.3)
+[Bước 1.7] pipeline/train.py     → huấn luyện Logit + XGBoost, xuất artefact JSON đúng
+                                   schema BR.evalXgb + tự kiểm chứng test_vectors (1e-9)
+[Bước 2] .github/workflows/update_model.yml → cron 02:00 UTC thứ Hai, tự commit models/
+[Bước 3] js/model-artifact.js    → BRMODEL.loadRemoteArtifact() nạp models/ lúc mở web,
+                                   kiểm chứng lại test_vectors trước khi nhận
+```
+
+**Chạy thủ công:**
+```bash
+pip install -r pipeline/requirements.txt
+python pipeline/run_pipeline.py --fallback sample-data.xlsx
+```
+
+**Chuỗi provider dữ liệu** (thử lần lượt, dùng cái đầu thành công):
+1. `vnstock` / `vnstock3` — thư viện Python mã nguồn mở cho dữ liệu VN (lưu ý: package có thể bị quarantine trên PyPI theo thời điểm)
+2. TCBS HTTP trực tiếp — không cần vnstock, nhưng chỉ hoạt động từ IP Việt Nam
+3. File CSV/XLSX fallback (`sample-data.xlsx`) — luôn chạy được, bảo đảm training không bao giờ chết vì API bị chặn geo (GitHub Actions runner đặt ở nước ngoài nên thường rơi về bước này)
+
+**Minh bạch:** artefact tự huấn luyện được gắn nhãn nguồn `auto-pipeline (...)` với huy hiệu **[C]** trong Model Lab; số liệu nghiên cứu gốc (Bảng 4.3/4.4) vẫn giữ huy hiệu **[A]** nguyên văn. Artefact bị từ chối tự động nếu không vượt qua kiểm chứng test_vectors, và GitHub Actions chỉ commit khi toàn bộ pipeline (kể cả verify) PASS.
+
+---
+
 ## 5. Tuyên bố Miễn trừ Trách nhiệm & Giới hạn Pháp lý (SEC-13 / PRD 0.3)
 
 1. **Bản chất Học thuật**: Hệ thống này là sản phẩm học thuật hỗ trợ ra quyết định và nghiên cứu, được xây dựng dựa trên dữ liệu báo cáo tài chính công khai của 23 ngân hàng thương mại Việt Nam giai đoạn 2014–2024.
 2. **Quy tắc Gán nhãn RISK**: Nhãn `RISK = 1` trong toàn bộ hệ thống **chỉ là quy tắc gán nhãn dữ liệu nghiên cứu** định lượng ($\text{NPL} > 3\% \lor \text{CAR} < 8\%$), **hoàn toàn không phải** kết luận pháp lý, quyết định thanh tra, xếp hạng tín nhiệm hay kết luận kiệt quệ tài chính chính thức từ Ngân hàng Nhà nước Việt Nam hoặc bất kỳ cơ quan quản lý nào.
-3. **Mô hình Demo**: Mô hình XGBoost v1.0.0 trong phiên bản này là mô hình minh hoạ với các cây quyết định được hiệu chuẩn phục vụ thử nghiệm trình duyệt; bảng kết quả Bảng 4.4 và Bảng 4.3 giữ nguyên văn từ báo cáo gốc với huy hiệu **[A]**.
+3. **Mô hình Demo**: Mô hình XGBoost v1.0.0 trong phiên bản này là mô hình minh hoạ với các cây quyết định được hiệu chuẩn phục vụ thử nghiệm trình duyệt; bảng kết quả Bảng 4.4 và Bảng 4.3 giữ nguyên văn từ báo cáo gốc với huy hiệu **[A]**. Artefact trong `models/` (nếu có) là bản huấn luyện tự động trên dữ liệu ingest gần nhất, gắn nhãn nguồn với huy hiệu **[C]** và phải vượt qua kiểm chứng test_vectors trước khi được hệ thống nạp.
 4. **Bảo mật & Quyền riêng tư**: Mặc định, mọi dữ liệu người dùng tải lên chỉ tồn tại trong phiên làm việc hiện tại của trình duyệt và biến mất khi đóng tab, không bao giờ được gửi về máy chủ.

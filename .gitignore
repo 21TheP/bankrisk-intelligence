@@ -13,3 +13,4 @@ yarn-error.log*
 
 # Temporary screen captures / large media
 *.webm
+__pycache__/\n*.pyc

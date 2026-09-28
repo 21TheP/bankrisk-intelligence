@@ -9,7 +9,8 @@
   const BR = window.BRCORE, UI = window.BRUI, PIPE = window.BRPIPE;
 
   const APP_VERSION = '1.0.0';
-  const MODEL_VERSION = window.BRMODEL.artifact.model_version;
+  // Phiên bản artefact đọc động qua window.BRMODEL.artifact.model_version — artefact
+  // có thể được thay bằng bản tự động huấn luyện (models/xgb_risk_model.json).
   const DISCLAIMER = 'BANKRISK Intelligence là sản phẩm học thuật phục vụ nghiên cứu và hỗ trợ ra quyết định. Hệ thống không đưa ra quyết định giám sát, quyết định cấp tín dụng, khuyến nghị đầu tư hay kết luận pháp lý. Nhãn RISK sử dụng trong hệ thống là quy tắc gán nhãn dữ liệu phục vụ nghiên cứu, không phải chuẩn mực pháp lý đầy đủ. Kết quả mô hình phụ thuộc vào chất lượng dữ liệu do người dùng tải lên.';
 
   const APP = window.BRAPP = window.APP = {
@@ -458,7 +459,7 @@
     /* ---------- Xuất báo cáo (FG-6, AC-08) ---------- */
     reportMetaLine() {
       const st = this.state;
-      return 'app v' + APP_VERSION + ' · model v' + MODEL_VERSION + ' · dataset ' + (st.datasetHash ? st.datasetHash.slice(0, 20) + '…' : 'n/a') + ' · ' + new Date().toLocaleString('vi-VN');
+      return 'app v' + APP_VERSION + ' · model v' + window.BRMODEL.artifact.model_version + ' · dataset ' + (st.datasetHash ? st.datasetHash.slice(0, 20) + '…' : 'n/a') + ' · ' + new Date().toLocaleString('vi-VN');
     },
     buildReportHTML(scope) {
       const st = this.state;
@@ -507,7 +508,7 @@
         '<div class="pagebreak"></div>' + bankSections +
         '<h2>3. Phương pháp &amp; hạn chế</h2>' +
         '<p><b>Chỉ tiêu:</b> SIZE = ln(total_assets); CAR = vốn tự có/RWA; ROA = LNST/tài sản bình quân; NIIR, NPL, DPRR, CIR theo công thức chuẩn (PRD Mục 7.3). Nhãn RISK = 1 nếu NPL &gt; 3% hoặc CAR &lt; 8% — quy tắc gán nhãn nghiên cứu, không phải chuẩn pháp lý.</p>' +
-        '<p><b>Hạn chế:</b> cỡ mẫu nhỏ; lớp mất cân bằng; NPL và CAR có quan hệ định nghĩa với nhãn; stress test dùng hệ số truyền dẫn giả định; dự báo là ngoại suy xu hướng. Mô hình demo (v' + MODEL_VERSION + ') là cây dựng thủ công minh hoạ, chưa huấn luyện trên dữ liệu thật.</p>' +
+        '<p><b>Hạn chế:</b> cỡ mẫu nhỏ; lớp mất cân bằng; NPL và CAR có quan hệ định nghĩa với nhãn; stress test dùng hệ số truyền dẫn giả định; dự báo là ngoại suy xu hướng. Artefact mô hình v' + window.BRMODEL.artifact.model_version + ' (nguồn: ' + (window.BRMODEL.artifactSource || 'embedded-demo') + ').</p>' +
         '<p class="meta">Sinh bởi BANKRISK Intelligence ' + APP_VERSION + ' — tính toán hoàn toàn phía trình duyệt (Chế độ phân tích riêng tư).</p>' +
         '</body></html>';
     },
@@ -570,8 +571,8 @@
     const main = UI.h('div', { class: 'main' }, topbar, UI.h('div', { class: 'content', id: 'view-root' }),
       UI.h('div', { class: 'footer' },
         UI.h('div', {}, UI.h('b', {}, 'Tuyên bố miễn trừ trách nhiệm: '), DISCLAIMER),
-        UI.h('div', { style: { marginTop: '4px', fontSize: '11px' } },
-          'app v' + APP_VERSION + ' · model v' + MODEL_VERSION + ' · Chạy trên Cloudflare Pages · ' + 'Không gửi dữ liệu ra ngoài trình duyệt khi chưa có sự đồng ý (P-04).')));
+        UI.h('div', { id: 'footer-model-version', style: { marginTop: '4px', fontSize: '11px' } },
+          'app v' + APP_VERSION + ' · model v' + window.BRMODEL.artifact.model_version + ' · Chạy trên Cloudflare Pages · ' + 'Không gửi dữ liệu ra ngoài trình duyệt khi chưa có sự đồng ý (P-04).')));
 
     const app = document.getElementById('app');
     app.append(side, main);
@@ -585,9 +586,20 @@
     window.addEventListener('hashchange', () => APP.render());
   }
 
+  /* ---------- Nạp artefact mô hình cập nhật tự động từ models/ ---------- */
+  APP.initRemoteModel = async function () {
+    const r = await window.BRMODEL.loadRemoteArtifact();
+    if (!r) return;
+    UI.toast('Đã nạp artefact mô hình cập nhật tự động: v' + r.version + ' (nguồn: ' + r.source + ')', 'ok');
+    const fv = document.getElementById('footer-model-version');
+    if (fv) fv.textContent = 'app v' + APP_VERSION + ' · model v' + window.BRMODEL.artifact.model_version + ' · Chạy trên Cloudflare Pages · Không gửi dữ liệu ra ngoài trình duyệt khi chưa có sự đồng ý (P-04).';
+    if (this.state.source) this.render();
+  };
+
+  function boot() { buildShell(); APP.render(); APP.initRemoteModel(); }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { buildShell(); APP.render(); });
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    buildShell(); APP.render();
+    boot();
   }
 })();

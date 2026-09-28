@@ -1,0 +1,13 @@
+# BANKRISK Intelligence — auto model pipeline
+# Lưu ý: thư viện `vnstock` đang bị quarantine trên PyPI (theo thời điểm 09/2026).
+# Khi đã hết quarantine, bỏ comment dòng dưới để bật provider vnstock trong CI:
+# vnstock>=3.0.0
+pandas>=2.0
+numpy>=1.26
+scikit-learn>=1.4
+xgboost>=2.0
+requests>=2.31
+openpyxl>=3.1
+
+# Tuỳ chọn — chỉ cần nếu muốn xuất thêm artefact ONNX cho onnxruntime-web:
+# onnxmltools>=1.12

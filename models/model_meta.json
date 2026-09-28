@@ -1,0 +1,60 @@
+{
+ "model_card": {
+  "model_name": "bankrisk_xgb",
+  "model_version": "1.1.0-auto-202609280650",
+  "training_date": "2026-09-28",
+  "dataset_version": "sha256:587fe0e2c64034fd",
+  "source": "auto-pipeline (cached)",
+  "input_schema": [
+   "SIZE",
+   "CAR",
+   "ROA",
+   "NIIR",
+   "NPL",
+   "DPRR",
+   "CIR",
+   "INF"
+  ],
+  "split_strategy": "time_based (train ≤ 2021, test ≥ 2022)",
+  "n_after_cleaning": 230,
+  "n_train": 184,
+  "n_test": 46,
+  "class_balance_train": "26.6% RISK=1",
+  "auto_trained_metrics": {
+   "badge": "C",
+   "note": "Tự động huấn luyện lại trên dữ liệu mới nhất — số liệu tính trên tập test theo thời gian, KHÔNG so sánh trực tiếp với Bảng 4.4 (N=300, chia ngẫu nhiên)",
+   "models": [
+    {
+     "name": "Logistic Regression",
+     "accuracy": 1.0,
+     "sensitivity": 1.0,
+     "specificity": 1.0,
+     "auc": 1.0
+    },
+    {
+     "name": "XGBoost",
+     "accuracy": 1.0,
+     "sensitivity": 1.0,
+     "specificity": 1.0,
+     "auc": 1.0
+    }
+   ]
+  },
+  "limitations": [
+   "Huấn luyện tự động trên dữ liệu ingest gần nhất — cần rà soát định kỳ bởi chuyên gia",
+   "NPL và CAR có quan hệ định nghĩa với nhãn RISK (M-04) — mô hình học quy tắc gán nhãn, độ chính xác test cao là hệ quả tất yếu",
+   "Hệ số Logit ước lượng trên giá trị gốc (không chuẩn hoá) với class_weight=balanced — xác suất Logit có thể thiếu hiệu chuẩn; ensemble 0.3/0.7 làm dịu",
+   "Điều kiện tách cây JS dùng ≤ còn XGBoost dùng < — chỉ khác khi giá trị trùng ngưỡng chính xác (thực tế không xảy ra)"
+  ]
+ },
+ "logit_coefficients": {
+  "intercept": 949.879035488663,
+  "SIZE": -6.331648565496865,
+  "CAR": -10838.741456945037,
+  "ROA": -665.187811325591,
+  "NIIR": 151.61529657825665,
+  "NPL": 0.0,
+  "DPRR": 0.8326231253146269,
+  "CIR": 23.243547683492558
+ }
+}
