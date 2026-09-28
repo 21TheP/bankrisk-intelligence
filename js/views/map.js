@@ -38,10 +38,19 @@
       const a = i._total_assets;
       if (x === null || x === undefined || y === null || !a) { skipped.push(i); return; }
       drawn.push(i);
+      // ECharts scatter: kích thước qua symbolSize (per-item), màu qua itemStyle
+      // dạng OBJECT — hàm trong itemStyle bị ECharts bỏ qua.
+      const color = UI.GROUP_COLOR[i.group] || UI.GROUP_COLOR.stable;
       data.push({
         name: i.bank_code,
         value: [x, y],
-        r: Math.sqrt(a / maxAsset) * 30 + 6,
+        symbolSize: Math.sqrt(a / maxAsset) * 30 + 6,
+        itemStyle: {
+          color, opacity: 0.82,
+          borderColor: color,
+          borderWidth: i.group === 'stable' ? 1 : 2.5,
+          borderType: i.group === 'critical' ? 'dotted' : 'solid'
+        },
         grp: i.group,
         assets: a,
         car: i.car, npl: i.npl, roa: i.roa,
@@ -72,11 +81,6 @@
           type: 'scatter',
           data,
           emphasis: { focus: 'series' },
-          itemStyle: d => ({
-            color: UI.GROUP_COLOR[d.data.grp], opacity: 0.82,
-            borderColor: UI.GROUP_COLOR[d.data.grp], borderWidth: d.data.grp === 'stable' ? 1 : 2.5,
-            borderType: d.data.grp === 'critical' ? 'dotted' : 'solid'
-          }),
           label: { show: data.length <= 30, formatter: p => p.data.name, position: 'top', fontSize: 9, color: '#5b6472' },
           // click → 8.2
           selectedMode: false
