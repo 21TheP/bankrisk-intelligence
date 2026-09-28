@@ -106,6 +106,12 @@
       name: 'feature_importance', height: 230
     });
     fiCard.append(UI.h('p', { class: 'muted' }, 'Mức độ quan trọng của từng biến trong cây XGBoost (tổng gain) — dùng để đọc nhanh biến nào dẫn dắt xác suất kiệt quệ.'));
+    const topFi = fi[0];
+    if (topFi && topFi[1] >= 90) {
+      fiCard.append(UI.h('div', { class: 'banner warn mt' }, '⚠ ', UI.h('span', {},
+        UI.h('b', {}, topFi[0] + ' chiếm ~' + Math.round(topFi[1]) + '% tổng gain — '),
+        'đây là hệ quả của quy tắc gán nhãn nghiên cứu: nhãn RISK được ĐỊNH NGHĨA trực tiếp từ NPL > 3% hoặc CAR < 8% (hạn chế M-04 trong Model card). Cây XGBoost tự huấn luyện tách lớp gần như hoàn hảo ngay ở lần chia đầu tiên bằng chính biến định nghĩa nhãn đó, nên các biến còn lại hầu như không còn gain. Đây là đặc tính của bài toán (rò rỉ định nghĩa nhãn), không phải lỗi hiển thị — nhưng đồng nghĩa feature importance từ mô hình này không phản ánh "yếu tố kinh tế" gây rủi ro.')));
+    }
     wrap.append(fiCard);
 
     /* ---- Z-score (tính trực tiếp trên dữ liệu) ---- */
