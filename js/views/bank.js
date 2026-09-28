@@ -21,10 +21,13 @@
     const bankCode = params.bank && banks.some(b => b.bank_code === params.bank) ? params.bank : (st.bank && banks.some(b => b.bank_code === st.bank) ? st.bank : banks[0].bank_code);
     st.bank = bankCode;
     const latestY = APP.latestYearOf(bankCode);
+    // Năm hiển thị = năm người dùng chọn ở topbar; nếu ngân hàng không có dữ liệu
+    // năm đó thì rơi về năm mới nhất có dữ liệu của ngân hàng (viewY)
+    const viewY = APP.ind(bankCode, st.year) ? st.year : latestY;
     const inds = st.indicators.filter(i => i.bank_code === bankCode).sort((a, b) => a.year - b.year);
-    const cur = APP.ind(bankCode, latestY);
-    const prev = APP.ind(bankCode, latestY - 1);
-    const rawRow = st.rows.find(r => r.bank_code === bankCode && r.year === latestY);
+    const cur = APP.ind(bankCode, viewY);
+    const prev = APP.ind(bankCode, viewY - 1);
+    const rawRow = st.rows.find(r => r.bank_code === bankCode && r.year === viewY);
 
     /* ---- 1) Bộ chọn ngân hàng ---- */
     const sel = UI.h('input', { class: 'inp', list: 'bank-list', value: bankCode, style: { minWidth: '300px' } });
@@ -35,7 +38,7 @@
       else UI.toast('Không tìm thấy mã ngân hàng: ' + code, 'warn');
     });
     wrap.append(UI.h('div', { class: 'flex mb' }, sel, dl,
-      UI.h('span', { class: 'muted' }, cur ? (cur._total_assets ? 'Tổng tài sản ' + BR.fmtMoney(cur._total_assets) + ' (' + latestY + ')' : '') : ''),
+      UI.h('span', { class: 'muted' }, cur ? (cur._total_assets ? 'Tổng tài sản ' + BR.fmtMoney(cur._total_assets) + ' (' + viewY + ')' : '') : ''),
       UI.badge(UI.srcType(st)),
       UI.h('span', { class: 'spacer' }),
       UI.h('button', { class: 'btn', onclick: () => APP.exportReport('pdf', { bank: { code: bankCode, name: cur ? cur.bank_name : bankCode } }) }, '🖨 Báo cáo ngân hàng')));
@@ -43,7 +46,7 @@
     if (!cur) { wrap.append(UI.emptyState('Không có dữ liệu cho ngân hàng này.')); return; }
 
     /* ---- Điểm & trạng thái ---- */
-    const fhsRes = BR.fhs(st.indicators, latestY, st.weights);
+    const fhsRes = BR.fhs(st.indicators, viewY, st.weights);
     const fhsVal = fhsRes.scores.get(bankCode);
     const prob = st.modelRun && cur.prob ? cur.prob.ensemble : null;
     const zInfo = cur.zscore === null ? (cur.zscore_n < 3 ? 'Cần ≥ 3 năm dữ liệu (hiện ' + cur.zscore_n + ' năm)' : 'Cần trường equity (vốn chủ sở hữu)') : null;
@@ -53,7 +56,7 @@
     top.append(UI.metric({
       label: 'Financial Health Score', badge: UI.srcType(st), badgeType: UI.srcType(st),
       value: fhsVal === null ? 'N/A' : String(fhsVal) + '<small>/100</small>',
-      note: 'Percentile trong mẫu năm ' + latestY + ' — PRD 9.2',
+      note: 'Percentile trong mẫu năm ' + viewY + ' — PRD 9.2',
       info: () => UI.h('div', { class: 'how-panel' },
         UI.h('p', {}, 'Điểm tổng hợp từ 7 chỉ tiêu chuẩn hoá theo phân vị trong mẫu, trung bình có trọng số:'),
         UI.h('table', {}, ...Object.entries(st.weights).map(([k, w]) =>
@@ -87,7 +90,7 @@
 
     const statusCard = UI.h('div', { class: 'card mb' });
     statusCard.append(UI.h('div', { class: 'flex' },
-      UI.h('h3', { style: { margin: 0 } }, 'Trạng thái cảnh báo kỳ ' + latestY),
+      UI.h('h3', { style: { margin: 0 } }, 'Trạng thái cảnh báo kỳ ' + viewY),
       UI.riskLabel(cur), UI.groupChip(cur.group),
       cur.hysteresisApplied ? UI.h('span', { class: 'chip neutral', title: 'Dải trễ ±0,1 điểm % (PRD 9.5)' }, 'dải trễ áp dụng') : null,
       cur.risk_partial ? UI.h('span', { class: 'chip neutral' }, 'đánh giá một phần — thiếu CAR hoặc NPL') : null));
@@ -162,11 +165,11 @@
 
     /* ---- 8) So sánh nhóm ngang hàng ---- */
     const peerCard = UI.h('div', { class: 'card mt' }, UI.h('div', { class: 'flex mb' },
-      UI.h('h3', { style: { margin: 0 } }, 'So sánh nhóm ngang hàng — năm ' + latestY), UI.badge(UI.srcType(st)),
+      UI.h('h3', { style: { margin: 0 } }, 'So sánh nhóm ngang hàng — năm ' + viewY), UI.badge(UI.srcType(st)),
       UI.h('span', { class: 'muted' }, 'Ngân hàng vs. trung vị toàn mẫu [GIẢ ĐỊNH]')));
     wrap.append(peerCard);
     const peerKeys = ['car', 'npl', 'roa', 'cir', 'dprr', 'niir'];
-    const inYearAll = st.indicators.filter(i => i.year === latestY);
+    const inYearAll = st.indicators.filter(i => i.year === viewY);
     const bankVals = peerKeys.map(k => cur[k]);
     const medVals = peerKeys.map(k => BR.median(inYearAll.map(i => i[k])));
     UI.chart(peerCard, {
@@ -199,7 +202,7 @@
       })).filter(x => Number.isFinite(x.val)).sort((a, b) => Math.abs(b.val) - Math.abs(a.val)).slice(0, 5);
       xaiCard.append(UI.h('p', { class: 'muted' }, 'Đóng góp từng biến lên điểm Logit (βᵢ·xᵢ) từ hệ số Logit công bố — biến dương đẩy xác suất kiệt quệ lên. Đây là giải thích theo hệ số tuyến tính, không phải SHAP đầy đủ.'));
       UI.chart(xaiCard, {
-        title: 'Top 5 yếu tố — kỳ ' + latestY,
+        title: 'Top 5 yếu tố — kỳ ' + viewY,
         option: {
           grid: { left: 60, right: 30, top: 30, bottom: 24, containLabel: true },
           tooltip: { formatter: p => p.name + ': ' + BR.fmtNum(p.value, 3) },
