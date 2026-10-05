@@ -1,8 +1,8 @@
 {
  "model_name": "bankrisk_xgb",
- "model_version": "1.1.0-auto-202609280650",
- "training_date": "2026-09-28",
- "dataset_version": "sha256:587fe0e2c64034fd",
+ "model_version": "1.1.0-auto-202610050849",
+ "training_date": "2026-10-05",
+ "dataset_version": "sha256:d3175d52d975324a",
  "input_schema": [
   "SIZE",
   "CAR",
