@@ -1,8 +1,8 @@
 {
  "model_card": {
   "model_name": "bankrisk_xgb",
-  "model_version": "1.1.0-auto-202610120900",
-  "training_date": "2026-10-12",
+  "model_version": "1.1.0-auto-202610190737",
+  "training_date": "2026-10-19",
   "dataset_version": "sha256:d3175d52d975324a",
   "source": "auto-pipeline (file:sample-data.xlsx)",
   "input_schema": [
