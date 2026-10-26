@@ -1,8 +1,8 @@
 {
  "model_card": {
   "model_name": "bankrisk_xgb",
-  "model_version": "1.1.0-auto-202610190737",
-  "training_date": "2026-10-19",
+  "model_version": "1.1.0-auto-202610260741",
+  "training_date": "2026-10-26",
   "dataset_version": "sha256:d3175d52d975324a",
   "source": "auto-pipeline (file:sample-data.xlsx)",
   "input_schema": [
@@ -48,13 +48,13 @@
   ]
  },
  "logit_coefficients": {
-  "intercept": 945.606108690562,
-  "SIZE": -6.217400125464243,
-  "CAR": -10812.806745210231,
-  "ROA": -663.6458079914285,
-  "NIIR": 150.5705798904312,
+  "intercept": 949.8728387369233,
+  "SIZE": -6.331501713595255,
+  "CAR": -10838.69974812554,
+  "ROA": -665.1853207304308,
+  "NIIR": 151.6137015067358,
   "NPL": 0.0,
-  "DPRR": 1.1480515870088486,
-  "CIR": 23.56101246139485
+  "DPRR": 0.8329528023889422,
+  "CIR": 23.24415299032664
  }
 }
